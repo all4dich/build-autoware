@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  autoware:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autoware
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
