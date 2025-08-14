@@ -22,8 +22,33 @@ mkdir -p $HOME/workspace
 cd $HOME/workspace
 
 # Clone the Autoware repository
-git clone -b release/v1.0 https://github.com/all4dich/autoware.git
+git clone -b release/v1.0 https://github.com/autowarefoundation/autoware.git
 cd autoware
+
+# Configure git
+git config --global user.email "all4dich@gmail.com"
+git config --global user.name "Sunjoo Park"
+
+# Revert a specific commit
+# Some of repos defined in autoware.repos remove 'v1.0' from the repository
+git revert --no-edit 896fd14
+
+#Apply patch to the tensorrt package
+patch -p1 << 'EOF'
+diff --git a/ansible/roles/tensorrt/tasks/main.yaml b/ansible/roles/tensorrt/tasks/main.yaml
+index df85ae7..388484b 100644
+--- a/ansible/roles/tensorrt/tasks/main.yaml
++++ b/ansible/roles/tensorrt/tasks/main.yaml
+@@ -20,6 +20,8 @@
+       - libnvinfer-plugin-dev={{ tensorrt_version }}
+       - libnvparsers-dev={{ tensorrt_version }}
+       - libnvonnxparsers-dev={{ tensorrt_version }}
++      - libnvinfer-headers-dev={{ tensorrt_version }}
++      - libnvinfer-headers-plugin-dev={{ tensorrt_version }}
+     allow_change_held_packages: true
+     allow_downgrade: true
+     update_cache: true
+EOF
 
 # Set up the development environment
 ./setup-dev-env.sh -y
@@ -31,12 +56,6 @@ cd autoware
 # Create the src directory
 mkdir src
 
-# Configure git
-git config --global user.email "all4dich@gmail.com"
-git config --global user.name "Sunjoo Park"
-
-# Revert a specific commit
-git revert --no-edit 896fd14
 
 # Import repositories
 vcs import src < autoware.repos
@@ -84,9 +103,9 @@ sudo apt-get install -y ros-humble-grid-map ros-humble-grid-map-core ros-humble-
 
 # Create directories and symbolic links for grid_map_core eigen plugins
 sudo mkdir -p /opt/ros/humble/include/grid_map_core/eigen_plugins
-sudo ln -s /opt/ros/humble/include/grid_map_core/grid_map_core/eigen_plugins/FunctorsPlugin.hpp /opt/ros/humble/include/grid_map_core/eigen_plugins/FunctorsPlugin.hpp
-sudo ln -s /opt/ros/humble/include/grid_map_core/grid_map_core/eigen_plugins/Functors.hpp /opt/ros/humble/include/grid_map_core/eigen_plugins/Functors.hpp
-sudo ln -s /opt/ros/humble/include/grid_map_core/grid_map_core/eigen_plugins/DenseBasePlugin.hpp /opt/ros/humble/include/grid_map_core/eigen_plugins/DenseBasePlugin.hpp
+sudo ln -s /opt/ros/humble/include/grid_map_core/grid_map_core/eigen_plugins/FunctorsPlugin.hpp /opt/ros/humble/include/grid_map_core/eigen_plugins/FunctorsPlugin.hpp || echo "INFO: Already Done"
+sudo ln -s /opt/ros/humble/include/grid_map_core/grid_map_core/eigen_plugins/Functors.hpp /opt/ros/humble/include/grid_map_core/eigen_plugins/Functors.hpp || echo "INFO: Already Done"
+sudo ln -s /opt/ros/humble/include/grid_map_core/grid_map_core/eigen_plugins/DenseBasePlugin.hpp /opt/ros/humble/include/grid_map_core/eigen_plugins/DenseBasePlugin.hpp || echo "INFO: Already Done"
 
 # Build the workspace
 . /opt/ros/humble/setup.bash

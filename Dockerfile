@@ -10,14 +10,29 @@ RUN apt-get update -y && apt-get install -y \
     python3-dev \
     python3-pip
 WORKDIR /workspace
-RUN git clone -b release/v1.0 https://github.com/all4dich/autoware.git
+RUN git clone -b release/v1.0 https://github.com/autowarefoundation/autoware.git
 WORKDIR /workspace/autoware
 RUN apt-get install -y python3-venv
-RUN ./setup-dev-env.sh -y
-RUN mkdir src
 RUN git config --global user.email all4dich@gmail.com
 RUN git config --global user.name "Sunjoo Park"
 RUN git revert 896fd14
+RUN patch -p1 << 'EOF' 
+diff --git a/ansible/roles/tensorrt/tasks/main.yaml b/ansible/roles/tensorrt/tasks/main.yaml
+index df85ae7..388484b 100644
+--- a/ansible/roles/tensorrt/tasks/main.yaml
++++ b/ansible/roles/tensorrt/tasks/main.yaml
+@@ -20,6 +20,8 @@
+       - libnvinfer-plugin-dev={{ tensorrt_version }}
+       - libnvparsers-dev={{ tensorrt_version }}
+       - libnvonnxparsers-dev={{ tensorrt_version }}
++      - libnvinfer-headers-dev={{ tensorrt_version }}
++      - libnvinfer-headers-plugin-dev={{ tensorrt_version }}
+     allow_change_held_packages: true
+     allow_downgrade: true
+     update_cache: true
+EOF
+RUN ./setup-dev-env.sh -y
+RUN mkdir src
 RUN vcs import src < autoware.repos
 RUN bash -c '. /opt/ros/humble/setup.bash && sudo apt update && sudo apt upgrade && rosdep update && rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO'
 RUN sed -i 's/<angles\/angles\/angles/<angles\/angles/g' ./src/sensor_component/external/nebula/nebula_decoders/include/nebula_decoders/nebula_decoders_velodyne/decoders/velodyne_scan_decoder.hpp
